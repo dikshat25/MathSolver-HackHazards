@@ -13,7 +13,6 @@ from flask_cors import CORS
 load_dotenv()
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
- # This will allow all origins by default
 client = groq.Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 # -----------------------------
@@ -43,7 +42,6 @@ check_ffmpeg()
 def index():
     return "MathGen API is running!"
 
-
 @app.route('/explain', methods=['POST'])
 def explain():
     user_input = request.json.get('question')
@@ -70,6 +68,10 @@ def transcribe():
 
     filename = secure_filename(file.filename)
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+
+    # ✅ Ensure uploads folder exists even after a git clone or fresh start
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
     file.save(filepath)
     print(f"File saved to {filepath}")
 
