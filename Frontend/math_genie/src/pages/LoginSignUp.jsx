@@ -1,41 +1,36 @@
 import { useState } from "react";
+import { auth } from '../firebase';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 
 export default function LoginSignupModal({ isDarkMode, showLoginForm, setShowLoginForm }) {
   const [isLoginMode, setIsLoginMode] = useState(true);
-  const [loginForm, setLoginForm] = useState({
-    email: '',
-    password: ''
-  });
-  const [signupForm, setSignupForm] = useState({
-    name: '',
-    email: '',
-    password: ''
-  });
+  const [loginForm, setLoginForm] = useState({ email: '', password: '' });
+  const [signupForm, setSignupForm] = useState({ name: '', email: '', password: '' });
 
   if (!showLoginForm) return null;
 
   const handleLoginChange = (e) => {
-    setLoginForm({
-      ...loginForm,
-      [e.target.name]: e.target.value
-    });
+    setLoginForm({ ...loginForm, [e.target.name]: e.target.value });
   };
 
   const handleSignupChange = (e) => {
-    setSignupForm({
-      ...signupForm,
-      [e.target.name]: e.target.value
-    });
+    setSignupForm({ ...signupForm, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isLoginMode) {
-      console.log("Login data:", loginForm);
-      // Handle login logic here
-    } else {
-      console.log("Signup data:", signupForm);
-      // Handle signup logic here
+    try {
+      if (isLoginMode) {
+        const userCredential = await signInWithEmailAndPassword(auth, loginForm.email, loginForm.password);
+        console.log("Logged in:", userCredential.user);
+      } else {
+        const userCredential = await createUserWithEmailAndPassword(auth, signupForm.email, signupForm.password);
+        console.log("Signed up:", userCredential.user);
+      }
+      setShowLoginForm(false);
+    } catch (error) {
+      console.error("Auth error:", error.message);
+      alert(error.message);
     }
   };
 
@@ -110,7 +105,6 @@ export default function LoginSignupModal({ isDarkMode, showLoginForm, setShowLog
                 type="button"
                 onClick={() => {
                   setIsLoginMode(!isLoginMode);
-                  // Clear form when switching modes
                   if (isLoginMode) {
                     setLoginForm({ email: '', password: '' });
                   } else {

@@ -1,7 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import MathInputPage from "./pages/InputBox";
-// Import other pages as needed
+import SettingsPage from "./pages/SettingPage";
+
 
 function App() {
   return (
@@ -9,7 +10,7 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/math-input" element={<MathInputPage />} />
-        {/* Add other routes as needed */}
+        <Route path="/settings" element={<SettingsPage />} />
       </Routes>
     </Router>
   );

@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { ArrowRight, Sparkles } from "lucide-react";
-import { useNavigate } from "react-router-dom"; // Assuming you're using React Router
+import { useNavigate } from "react-router-dom"; 
 import Navbar from "../component/Navbar";
 import Footer from "../component/Footer";
 import LoginSignupModal from "./LoginSignUp";
 import MathBackground from "../component/MathBg";
 import useThemeToggle from "../component/ThemeToggle";
 import MathInputBox from "./InputBox";
+import SettingsPanel from "./SettingPage";
 
 // Feature Card Component
 function FeatureCard({ title, description, icon, isDarkMode }) {
@@ -61,12 +62,15 @@ function TypingWelcome({ isDarkMode }) {
 export default function HomePage() {
   const { isDarkMode, toggleTheme } = useThemeToggle();
   const [showLoginForm, setShowLoginForm] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const navigate = useNavigate(); // For navigation
   
   const navigateToMathInput = () => {
     navigate('/math-input'); // Navigate to the math input page
   };
-  
+  const toggleSettings = () => {
+    setIsSettingsOpen(!isSettingsOpen);
+  };
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-gradient-to-br from-gray-900 to-indigo-950 text-white' : 'bg-gradient-to-br from-purple-50 to-indigo-100 text-gray-900'} relative overflow-hidden transition-colors duration-300`}>
       {/* Animated Math Background */}
@@ -74,11 +78,19 @@ export default function HomePage() {
         <MathBackground isDarkMode={isDarkMode} />
       </div>
       
+      
       {/* Navigation */}
       <Navbar 
         isDarkMode={isDarkMode}
         toggleTheme={toggleTheme}
         setShowLoginForm={setShowLoginForm}
+        toggleSettings={toggleSettings} 
+      />
+      <SettingsPanel 
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        isDarkMode={isDarkMode}
+        toggleTheme={toggleTheme}
       />
       
       {/* Hero Section */}

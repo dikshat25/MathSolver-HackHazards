@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { Sun, Moon, Menu, X, MessageSquare } from "lucide-react";
+import { Menu, X, MessageSquare, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-export default function Navbar({ isDarkMode, toggleTheme, setShowLoginForm }) {
+export default function Navbar({ isDarkMode, setShowLoginForm, toggleSettings }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
@@ -26,7 +26,7 @@ export default function Navbar({ isDarkMode, toggleTheme, setShowLoginForm }) {
 
   return (
     <>
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      <nav className={`fixed top-0 left-0 right-0 z-30 transition-all duration-300 ${
         isScrolled 
           ? isDarkMode 
             ? 'bg-gray-900 shadow-lg' 
@@ -61,17 +61,17 @@ export default function Navbar({ isDarkMode, toggleTheme, setShowLoginForm }) {
                 <span className="text-sm font-medium">Chat</span>
               </button>
               
-              {/* Theme Toggle */}
+              {/* Settings Button */}
               <button 
-                onClick={toggleTheme} 
-                className={`p-2 rounded-full ${
+                onClick={toggleSettings}
+                className={`p-2 rounded-lg ${
                   isDarkMode 
-                    ? 'bg-gray-700 hover:bg-gray-600 text-yellow-300' 
+                    ? 'bg-gray-700 hover:bg-gray-600 text-white' 
                     : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
                 } transition-colors`}
-                aria-label="Toggle theme"
+                aria-label="Settings"
               >
-                {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+                <Settings size={20} />
               </button>
               
               {/* Sign In Button */}
@@ -102,17 +102,17 @@ export default function Navbar({ isDarkMode, toggleTheme, setShowLoginForm }) {
                 <MessageSquare size={20} />
               </button>
               
-              {/* Theme Toggle (Mobile) */}
+              {/* Settings Button (Mobile) */}
               <button 
-                onClick={toggleTheme} 
-                className={`p-2 rounded-full ${
+                onClick={toggleSettings}
+                className={`p-2 rounded-lg ${
                   isDarkMode 
-                    ? 'bg-gray-700 text-yellow-300' 
+                    ? 'bg-gray-700 text-white' 
                     : 'bg-gray-200 text-gray-700'
                 }`}
-                aria-label="Toggle theme"
+                aria-label="Settings"
               >
-                {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+                <Settings size={20} />
               </button>
               
               {/* Mobile Menu Toggle */}
@@ -168,10 +168,9 @@ export default function Navbar({ isDarkMode, toggleTheme, setShowLoginForm }) {
 function NavLinks({ isDarkMode, isMobile = false, closeMenu }) {
   const navItems = [
     { label: "Home", href: "/" },
-    { label: "Dashboard", href: "/dashboard" },
+    { label: "Dashboard", href: "/math-input" },
     { label: "Solution Viewer", href: "/solutions" },
     { label: "Mistake Tracker", href: "/mistakes" },
-    { label: "Settings", href: "/settings" },
   ];
   
   return (
