@@ -1,46 +1,95 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Save, History, LogOut, User, Settings as SettingsIcon, Trash2, Eye, X, Moon, Sun, Award, Book, Zap, ChevronLeft, ChevronRight, Bookmark, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { getDoc, getDocs, doc, collection, deleteDoc, query, where } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth, db } from "../firebase";
 
 export default function SettingsPanel({ isDarkMode, toggleTheme, isOpen, onClose }) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("profile");
+
   const [profileForm, setProfileForm] = useState({
-    name: "John Doe",
-    email: "john.doe@example.com",
+    name: "Loading...",
+    email: "Loading...",
     grade: "High School",
     preferredMode: "detailed"
   });
-  
-  const [historyItems, setHistoryItems] = useState([
-    {
-      id: 1,
-      date: "2025-04-10",
-      problem: "Solve for x: 2x + 5 = 15",
-      solution: "2x + 5 = 15\n2x = 10\nx = 5",
-      thumbnail: "/api/placeholder/60/60"
-    },
-    {
-      id: 2,
-      date: "2025-04-09",
-      problem: "Find the derivative of f(x) = x^3 + 2x^2 - 4x + 7",
-      solution: "f'(x) = 3x^2 + 4x - 4",
-      thumbnail: "/api/placeholder/60/60"
-    },
-    {
-      id: 3,
-      date: "2025-04-08",
-      problem: "Calculate the area of a circle with radius 6 cm",
-      solution: "Area = πr² = π×6² = 36π ≈ 113.1 cm²",
-      thumbnail: "/api/placeholder/60/60"
-    }
-  ]);
-  
-  // Flashcard view state
-  const [viewMode, setViewMode] = useState("list"); // "list" or "flashcard"
+
+  const [historyItems, setHistoryItems] = useState([]);
+  const [viewMode, setViewMode] = useState("list");
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [userId, setUserId] = useState(null);
 
+  // Fetch user data and history on auth change
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setUserId(user.uid);
+  
+        try {
+          
+          const displayNameFromEmail = (email) => {
+            if (!email) return "Unnamed";
+            const [namePart] = email.split("@");
+            return namePart
+              .replace(/[\._-]/g, " ")
+              .split(" ")
+              .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(" ");
+          };
+  
+          
+          const userRef = doc(db, "users", user.uid);
+          const userSnap = await getDoc(userRef);
+  
+          let fullName = displayNameFromEmail(user.email);
+  
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
+            if (userData.fullName) {
+              fullName = userData.fullName;
+            }
+          }
+  
+          setProfileForm((prev) => ({
+            ...prev,
+            name: fullName,
+            email: user.email || "No email"
+          }));
+  
+          
+          const historyRef = query(
+            collection(db, "mathHistory"),
+            where("uid", "==", user.uid)
+          ); //  corrected path
+          const historySnap = await getDocs(historyRef);
+          
+          const items = historySnap.docs.map(doc => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              problem: data.problem || "Untitled Problem",
+              solution: data.solution || "No solution provided",
+              date: data.date || new Date().toISOString().split("T")[0],
+              thumbnail: data.thumbnail || "/api/placeholder/60/60"
+            };
+          });
+          
+          console.log("Fetched history items:", items); // Optional debug log
+          setHistoryItems(items);
+          
+        } catch (err) {
+          console.error("Failed to fetch user or history:", err);
+        }
+      }
+    });
+  
+    return () => unsubscribe();
+  }, []);
+  
+  
   const handleProfileChange = (e) => {
     setProfileForm({
       ...profileForm,
@@ -53,8 +102,18 @@ export default function SettingsPanel({ isDarkMode, toggleTheme, isOpen, onClose
     alert("Profile updated successfully!");
   };
 
-  const handleDeleteHistoryItem = (id) => {
+  const handleDeleteHistoryItem = async (id) => {
     setHistoryItems(historyItems.filter(item => item.id !== id));
+  
+    if (userId) {
+      try {
+        const ref = doc(db, "mathHistory", userId, id); // assuming nested structure
+        await deleteDoc(ref);
+        console.log("Deleted from Firestore");
+      } catch (error) {
+        console.error("Failed to delete history item:", error);
+      }
+    }
   };
 
   const handleViewSolution = (id) => {

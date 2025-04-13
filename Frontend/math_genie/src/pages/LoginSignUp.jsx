@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { auth } from '../firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "../firebase"; // Adjust path if needed
 
 export default function LoginSignupModal({ isDarkMode, showLoginForm, setShowLoginForm }) {
   const [isLoginMode, setIsLoginMode] = useState(true);
@@ -25,8 +27,17 @@ export default function LoginSignupModal({ isDarkMode, showLoginForm, setShowLog
         console.log("Logged in:", userCredential.user);
       } else {
         const userCredential = await createUserWithEmailAndPassword(auth, signupForm.email, signupForm.password);
-        console.log("Signed up:", userCredential.user);
+        const user = userCredential.user;
+
+        // Save name & email to Firestore
+        await setDoc(doc(db, "users", user.uid), {
+          name: signupForm.name,
+          email: signupForm.email
+        });
+
+        console.log("Signed up and user info saved");
       }
+
       setShowLoginForm(false);
     } catch (error) {
       console.error("Auth error:", error.message);
