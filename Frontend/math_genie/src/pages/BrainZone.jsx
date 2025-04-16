@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Brain, Award, Zap, Star, Trophy, Clock, ArrowRight } from "lucide-react";
+import {Link} from "react-router-dom" ;
 
 export default function BrainZoneGameSection({ isDarkMode }) {
   const [selectedCategory, setSelectedCategory] = useState("popular");
@@ -10,7 +11,9 @@ export default function BrainZoneGameSection({ isDarkMode }) {
       { id: 1, title: "Math Blitz", difficulty: "Medium", players: "2.3k", img: "/api/placeholder/150/150", description: "Solve equations at lightning speed!" },
       { id: 2, title: "Geometry Dash", difficulty: "Hard", players: "1.8k", img: "/api/placeholder/150/150", description: "Master shapes and spatial puzzles" },
       { id: 3, title: "Number Crush", difficulty: "Easy", players: "3.4k", img: "/api/placeholder/150/150", description: "Match numbers to solve problems" },
-      { id: 10, title: "Fraction Fun", difficulty: "Medium", players: "1.5k", img: "/api/placeholder/150/150", description: "Master fractions through fun puzzles" }
+      { id: 10, title: "Fraction Fun", difficulty: "Medium", players: "1.5k", img: "/api/placeholder/150/150", description: "Master fractions through fun puzzles" },
+      { id: 13, title: "Guess the Graph", difficulty: "Medium", players: "1.2k", img: "/api/placeholder/150/150", description: "Identify functions from their graphs", link: "/games/guess-the-graph" },
+      { id: 14, title: "Math Escape Room", difficulty: "Hard", players: "2.1k", img: "/api/placeholder/150/150", description: "Solve puzzles to escape the math labyrinth", link: "/games/math-escape-room" }
     ],
     challenges: [
       { id: 4, title: "Weekly Challenge", difficulty: "Variable", players: "956", img: "/api/placeholder/150/150", description: "New problems every week" },
@@ -167,9 +170,11 @@ export default function BrainZoneGameSection({ isDarkMode }) {
                   <span className={`font-medium ${getDifficultyColor(game.difficulty)}`}>
                     {game.difficulty}
                   </span>
-                  <button className={`${isDarkMode ? 'bg-indigo-700 hover:bg-indigo-600' : 'bg-indigo-600 hover:bg-indigo-700'} text-white rounded-lg px-4 py-2 font-medium transition-colors`}>
-                    Play Now
-                  </button>
+                  <Link to={game.link || "#"}>
+                    <button className={`${isDarkMode ? 'bg-indigo-700 hover:bg-indigo-600' : 'bg-indigo-600 hover:bg-indigo-700'} text-white rounded-lg px-4 py-2 font-medium transition-colors`}>
+                        Play Now
+                    </button>
+                  </Link>
                 </div>
               </div>
             </div>
