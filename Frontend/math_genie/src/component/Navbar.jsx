@@ -169,7 +169,7 @@ function NavLinks({ isDarkMode, isMobile = false, closeMenu }) {
   const navItems = [
     { label: "Home", href: "/" },
     { label: "Dashboard", href: "/math-input" },
-    { label: "Solution Viewer", href: "/solutions" },
+    { label: "Brain Zone", href: "/brain-zone" },
     { label: "Mistake Tracker", href: "/mistakes" },
   ];
   
