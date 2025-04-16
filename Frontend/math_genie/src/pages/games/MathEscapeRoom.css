@@ -1,0 +1,732 @@
+/* Enhanced Math Escape Room CSS with immersive theme - ISOLATED VERSION */
+/* This ensures styles only apply to the escape room container and don't affect other pages */
+
+/* Import fonts only for this component */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Special+Elite&family=Roboto+Mono:wght@400;700&display=swap');
+
+/* Escape room specific CSS variables - scoped to container */
+.escape-room-container {
+  /* Theme color variables */
+  --dungeon-primary: #2d2d30;
+  --dungeon-text: #e9c46a;
+  --dungeon-accent: #e76f51;
+  
+  --laboratory-primary: #1a3e59;
+  --laboratory-text: #50b2c0;
+  --laboratory-accent: #c23c64;
+  
+  --library-primary: #3c2a21;
+  --library-text: #e5e5cb;
+  --library-accent: #d5cea3;
+  
+  --digital-primary: #1a1b26;
+  --digital-text: #7dcfff;
+  --digital-accent: #bb9af7;
+
+  /* Common spacing/sizing variables */
+  --border-radius-sm: 5px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 10px;
+  --shadow-sm: 0 3px 6px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 5px 15px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.2);
+  
+  /* Container base styles */
+  min-height: 100vh;
+  width: 100%;
+  padding: 20px;
+  font-family: 'Special Elite', cursive;
+  transition: background-color 1s ease, color 1s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Reset styles only within escape room container */
+.escape-room-container * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.escape-room-container .theme-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-repeat: repeat;
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Typography - scoped to container */
+.escape-room-container h1, 
+.escape-room-container h2, 
+.escape-room-container h3, 
+.escape-room-container h4 {
+  font-family: 'Orbitron', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.escape-room-container .game-title {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 2.5rem;
+  position: relative;
+  z-index: 2;
+}
+
+.escape-room-container .escape-icon {
+  margin: 0 10px;
+  display: inline-block;
+  animation: escapeRoomPulse 2s infinite;
+}
+
+@keyframes escapeRoomPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* Start Screen */
+.escape-room-container .start-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 70vh;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+}
+
+.escape-room-container .start-content {
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 40px;
+  border-radius: var(--border-radius-lg);
+  max-width: 800px;
+  border: 2px solid currentColor;
+  box-shadow: var(--shadow-lg);
+}
+
+.escape-room-container .start-content h2 {
+  margin-bottom: 20px;
+  font-size: 2rem;
+}
+
+.escape-room-container .start-content p {
+  margin-bottom: 15px;
+  line-height: 1.6;
+  font-size: 1.1rem;
+}
+
+.escape-room-container .start-button {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: inherit;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.2rem;
+  padding: 12px 24px;
+  border: 2px solid currentColor;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  margin-top: 20px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.escape-room-container .start-button:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.6s;
+}
+
+.escape-room-container .start-button:hover:before {
+  left: 100%;
+}
+
+.escape-room-container .start-button:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+.escape-room-container .start-button:focus {
+  outline: 2px solid var(--dungeon-accent);
+  outline-offset: 2px;
+}
+
+.escape-room-container .button-icon {
+  margin-right: 10px;
+}
+
+/* Game Screen */
+.escape-room-container .game-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: relative;
+  z-index: 2;
+}
+
+.escape-room-container .theme-name {
+  text-align: center;
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.escape-room-container .theme-icon {
+  font-size: 1.5rem;
+}
+
+.escape-room-container .room-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 10px 20px;
+  border-radius: var(--border-radius-sm);
+  margin-bottom: 10px;
+  box-shadow: var(--shadow-sm);
+}
+
+.escape-room-container .room-number {
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.escape-room-container .timer {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 1.2rem;
+  transition: color 0.3s ease;
+}
+
+.escape-room-container .timer.warning {
+  color: #ffd166;
+  animation: escapeRoomBlink 1s infinite;
+}
+
+.escape-room-container .timer.danger {
+  color: #ef476f;
+  animation: escapeRoomBlink 0.5s infinite;
+}
+
+@keyframes escapeRoomBlink {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+/* Challenge Container */
+.escape-room-container .challenge-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+@media (min-width: 768px) {
+  .escape-room-container .challenge-container {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+/* Challenge Card */
+.escape-room-container .challenge-card {
+  background-color: rgba(0, 0, 0, 0.6);
+  padding: 25px;
+  border-radius: var(--border-radius-md);
+  border: 1px solid currentColor;
+  box-shadow: var(--shadow-md);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.escape-room-container .challenge-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+}
+
+.escape-room-container .challenge-card::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  height: 5px;
+  background: linear-gradient(90deg, var(--dungeon-accent), var(--laboratory-accent), var(--library-accent), var(--digital-accent));
+  z-index: 1;
+}
+
+.escape-room-container .challenge-title {
+  margin-bottom: 15px;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.escape-room-container .challenge-icon {
+  font-size: 1.8rem;
+}
+
+.escape-room-container .challenge-description {
+  margin-bottom: 20px;
+  line-height: 1.6;
+  font-size: 1.1rem;
+}
+
+.escape-room-container .math-problem {
+  font-family: 'Roboto Mono', monospace;
+  padding: 15px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: var(--border-radius-sm);
+  margin-bottom: 20px;
+  border-left: 4px solid currentColor;
+}
+
+.escape-room-container .math-formula {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 1.2rem;
+  margin: 10px 0;
+  text-align: center;
+}
+
+.escape-room-container .math-formula.highlighted {
+  color: var(--dungeon-accent);
+  font-weight: bold;
+}
+
+/* Form Styles */
+.escape-room-container .answer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.escape-room-container .input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.escape-room-container .input-group label {
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.escape-room-container .answer-input {
+  padding: 12px 15px;
+  border-radius: var(--border-radius-sm);
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid currentColor;
+  color: inherit;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 1.1rem;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.escape-room-container .answer-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--dungeon-accent);
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.escape-room-container .submit-button {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: inherit;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.1rem;
+  padding: 12px 20px;
+  border: 1px solid currentColor;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  margin-top: 10px;
+}
+
+.escape-room-container .submit-button:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.escape-room-container .submit-button:focus {
+  outline: 2px solid var(--dungeon-accent);
+  outline-offset: 2px;
+}
+
+.escape-room-container .submit-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Hint System */
+.escape-room-container .hints-panel {
+  background-color: rgba(0, 0, 0, 0.6);
+  padding: 20px;
+  border-radius: var(--border-radius-md);
+  border: 1px solid currentColor;
+}
+
+.escape-room-container .hints-title {
+  margin-bottom: 15px;
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.escape-room-container .hint-list {
+  list-style: none;
+}
+
+.escape-room-container .hint-item {
+  margin-bottom: 10px;
+  padding: 10px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: background-color 0.3s ease, border-left-color 0.3s ease;
+  border-left: 3px solid transparent;
+}
+
+.escape-room-container .hint-item:hover {
+  background-color: rgba(0, 0, 0, 0.5);
+  border-left-color: currentColor;
+}
+
+.escape-room-container .hint-item.unlocked {
+  border-left-color: var(--dungeon-accent);
+}
+
+.escape-room-container .hint-content {
+  display: none;
+  padding: 10px;
+  margin-top: 10px;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: var(--border-radius-sm);
+  font-style: italic;
+}
+
+.escape-room-container .hint-item.active .hint-content {
+  display: block;
+  animation: escapeRoomFadeIn 0.5s ease;
+}
+
+@keyframes escapeRoomFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.escape-room-container .hint-unlock-cost {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Feedback Styles */
+.escape-room-container .feedback {
+  padding: 15px;
+  margin: 15px 0;
+  border-radius: var(--border-radius-sm);
+  font-weight: bold;
+  text-align: center;
+  animation: escapeRoomSlideIn 0.5s ease;
+}
+
+@keyframes escapeRoomSlideIn {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.escape-room-container .feedback.correct {
+  background-color: rgba(40, 167, 69, 0.3);
+  border: 1px solid rgba(40, 167, 69, 0.5);
+}
+
+.escape-room-container .feedback.incorrect {
+  background-color: rgba(220, 53, 69, 0.3);
+  border: 1px solid rgba(220, 53, 69, 0.5);
+}
+
+/* Progress Bar */
+.escape-room-container .progress-container {
+  width: 100%;
+  height: 10px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: var(--border-radius-sm);
+  overflow: hidden;
+  margin: 10px 0;
+}
+
+.escape-room-container .progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--dungeon-accent), var(--laboratory-accent));
+  transition: width 0.5s ease;
+}
+
+/* Theme-specific Styles */
+/* Dungeon Theme */
+.escape-room-container.theme-dungeon {
+  background-color: var(--dungeon-primary);
+  color: var(--dungeon-text);
+}
+
+.escape-room-container.theme-dungeon .theme-overlay {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><path fill="%23e9c46a" d="M0 0h4v4H0V0zm10 0h4v4h-4V0zM0 10h4v4H0v-4zm10 0h4v4h-4v-4z"/></svg>');
+}
+
+.escape-room-container.theme-dungeon .challenge-card::before {
+  background: var(--dungeon-accent);
+}
+
+.escape-room-container.theme-dungeon .submit-button:hover {
+  background-color: var(--dungeon-accent);
+  color: var(--dungeon-primary);
+}
+
+/* Laboratory Theme */
+.escape-room-container.theme-laboratory {
+  background-color: var(--laboratory-primary);
+  color: var(--laboratory-text);
+}
+
+.escape-room-container.theme-laboratory .theme-overlay {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30"><circle cx="5" cy="5" r="2" fill="%2350b2c0"/><circle cx="15" cy="5" r="2" fill="%2350b2c0"/><circle cx="25" cy="5" r="2" fill="%2350b2c0"/><circle cx="5" cy="15" r="2" fill="%2350b2c0"/><circle cx="15" cy="15" r="2" fill="%2350b2c0"/><circle cx="25" cy="15" r="2" fill="%2350b2c0"/><circle cx="5" cy="25" r="2" fill="%2350b2c0"/><circle cx="15" cy="25" r="2" fill="%2350b2c0"/><circle cx="25" cy="25" r="2" fill="%2350b2c0"/></svg>');
+}
+
+.escape-room-container.theme-laboratory .challenge-card::before {
+  background: var(--laboratory-accent);
+}
+
+.escape-room-container.theme-laboratory .submit-button:hover {
+  background-color: var(--laboratory-accent);
+  color: var(--laboratory-primary);
+}
+
+/* Library Theme */
+.escape-room-container.theme-library {
+  background-color: var(--library-primary);
+  color: var(--library-text);
+}
+
+.escape-room-container.theme-library .theme-overlay {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><rect x="0" y="0" width="10" height="40" fill="%23e5e5cb" opacity="0.1"/><rect x="20" y="0" width="10" height="40" fill="%23e5e5cb" opacity="0.1"/></svg>');
+}
+
+.escape-room-container.theme-library .challenge-card::before {
+  background: var(--library-accent);
+}
+
+.escape-room-container.theme-library .submit-button:hover {
+  background-color: var(--library-accent);
+  color: var(--library-primary);
+}
+
+/* Digital Theme */
+.escape-room-container.theme-digital {
+  background-color: var(--digital-primary);
+  color: var(--digital-text);
+}
+
+.escape-room-container.theme-digital .theme-overlay {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><path d="M0 0h40v40H0V0zm20 40V0M40 20H0" stroke="%237dcfff" stroke-width="0.5" opacity="0.2"/></svg>');
+}
+
+.escape-room-container.theme-digital .challenge-card::before {
+  background: var(--digital-accent);
+}
+
+.escape-room-container.theme-digital .submit-button:hover {
+  background-color: var(--digital-accent);
+  color: var(--digital-primary);
+}
+
+/* Modal Styles */
+.escape-room-container .modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.escape-room-container .modal-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.escape-room-container .modal-content {
+  width: 90%;
+  max-width: 600px;
+  background-color: var(--dungeon-primary);
+  color: var(--dungeon-text);
+  border-radius: var(--border-radius-lg);
+  padding: 30px;
+  position: relative;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+  transform: translateY(-50px);
+  opacity: 0;
+  transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.5s ease;
+  border: 2px solid var(--dungeon-accent);
+}
+
+.escape-room-container .modal-overlay.active .modal-content {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.escape-room-container .modal-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.escape-room-container .modal-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: currentColor;
+  transition: transform 0.3s ease;
+}
+
+.escape-room-container .modal-close:hover {
+  transform: rotate(90deg);
+}
+
+.escape-room-container .modal-close:focus {
+  outline: 2px solid var(--dungeon-accent);
+  outline-offset: 2px;
+}
+
+.escape-room-container .modal-footer {
+  margin-top: 30px;
+  text-align: center;
+}
+
+.escape-room-container .modal-button {
+  background-color: var(--dungeon-accent);
+  color: var(--dungeon-primary);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.1rem;
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.escape-room-container .modal-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.escape-room-container .modal-button:focus {
+  outline: 2px solid var(--dungeon-text);
+  outline-offset: 2px;
+}
+
+/* Success Animation */
+.escape-room-container .confetti {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background-color: #f00;
+  opacity: 0;
+}
+
+@keyframes escapeRoomConfettiDrop {
+  0% {
+    transform: translateY(-100px) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(calc(100vh + 100px)) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+/* Accessibility Improvements */
+@media (prefers-reduced-motion: reduce) {
+  .escape-room-container .escape-icon,
+  .escape-room-container .start-button:before,
+  .escape-room-container .timer.warning,
+  .escape-room-container .timer.danger,
+  .escape-room-container .hint-item.active .hint-content,
+  .escape-room-container .feedback,
+  .escape-room-container .modal-content,
+  .escape-room-container .modal-close:hover,
+  .escape-room-container .confetti {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 767px) {
+  .escape-room-container .game-title {
+    font-size: 2rem;
+  }
+  .escape-room-container .start-content, 
+  .escape-room-container .challenge-card, 
+  .escape-room-container .hints-panel {
+    padding: 15px;
+  }
+  .escape-room-container .challenge-title {
+    font-size: 1.3rem;
+  }
+  .escape-room-container .math-formula {
+    font-size: 1rem;
+  }
+  .escape-room-container .submit-button, 
+  .escape-room-container .modal-button {
+    font-size: 1rem;
+    padding: 10px 15px;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .escape-room-container {
+    background-color: white !important;
+    color: black !important;
+  }
+  
+  .escape-room-container .theme-overlay,
+  .escape-room-container .confetti,
+  .escape-room-container .escape-icon {
+    display: none !important;
+  }
+  
+  .escape-room-container .challenge-card,
+  .escape-room-container .hints-panel {
+    break-inside: avoid;
+    border: 1px solid #ccc;
+    box-shadow: none;
+    background-color: white !important;
+    color: black !important;
+  }
+}
