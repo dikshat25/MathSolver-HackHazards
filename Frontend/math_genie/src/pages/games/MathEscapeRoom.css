@@ -3,7 +3,7 @@
 .escape-room-container {
   font-family: 'Roboto', sans-serif;
   min-height: 100vh;
-  width: 100%;
+  width: 100vw;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -136,7 +136,7 @@
 
 /* Game screen layout */
 .game-screen {
-  width: 100%;
+  width: 100vw;
   position: relative;
   z-index: 2;
 }

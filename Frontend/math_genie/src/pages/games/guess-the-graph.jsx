@@ -571,7 +571,7 @@ const [user, setUser] = useState(null); // ✅ GOOD
       )}
 
 {gameStarted && !showLevelComplete && !gameComplete && (
-        <div className="container mx-auto px-4 py-6 max-w-5xl">
+        <div className="container w-screen px-4 py-6">
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
             <div>
