@@ -1,7 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './MathEscapeRoom.css';
+import { addDoc, collection, Timestamp } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth, db } from "../../firebase"; 
+
 
 const MathEscapeRoom = () => {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   // Game state
   const [currentLevel, setCurrentLevel] = useState(1);
   const [userAnswer, setUserAnswer] = useState('');
@@ -34,6 +48,26 @@ const MathEscapeRoom = () => {
   const completeSoundRef = useRef(null);
   const lowTimeSoundRef = useRef(null);
 
+  const saveGameProgress = async () => {
+    if (!user) return;
+
+    try {
+      await addDoc(collection(db, "escapeScores"), {
+        uid: user.uid,
+        email: user.email,
+        score,
+        levelReached: currentLevel,
+        hintsUsed: usedHints,
+        toolsCollected: inventory.length,
+        completed: gameCompleted,
+        createdAt: Timestamp.now(),
+      });
+      console.log("Escape Room progress saved!");
+    } catch (error) {
+      console.error("Error saving progress:", error);
+    }
+  };
+  
   // Room themes with more visual details
   const themes = {
     dungeon: {
@@ -73,6 +107,7 @@ const MathEscapeRoom = () => {
       icon: "💻"
     },
   };
+
 
   // Puzzle data for each level
   const puzzles = [
@@ -346,6 +381,8 @@ const MathEscapeRoom = () => {
         } else {
           setGameCompleted(true);
           setMessage(`Congratulations! You've escaped all the rooms with ${score} points!`);
+          saveGameProgress();
+
           
           if (completeSoundRef.current) {
             completeSoundRef.current.play().catch(e => console.log('Audio play prevented:', e));
@@ -364,6 +401,13 @@ const MathEscapeRoom = () => {
       setMessage("The lock doesn't budge. That's not the right answer!");
     }
   };
+
+  useEffect(() => {
+    if ((gameCompleted || gameOver) && user) {
+      saveGameProgress();
+    }
+  }, [gameCompleted, gameOver, user]);
+  
 
   // Create a visual unlock effect
   const createUnlockEffect = () => {
@@ -478,6 +522,7 @@ const MathEscapeRoom = () => {
       setMessage("You don't have a magical key to skip this room!");
     }
   };
+  
 
   // Get current puzzle data
   const currentPuzzle = puzzles.find(p => p.level === currentLevel) || puzzles[0];

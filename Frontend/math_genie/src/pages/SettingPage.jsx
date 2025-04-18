@@ -5,6 +5,7 @@ import { getDoc, getDocs, doc, collection, deleteDoc, query, where } from "fireb
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "../firebase";
 
+
 export default function SettingsPanel({ isDarkMode, toggleTheme, isOpen, onClose }) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("profile");
@@ -121,11 +122,19 @@ export default function SettingsPanel({ isDarkMode, toggleTheme, isOpen, onClose
     onClose(); // Close the panel after navigation
   };
 
-  const handleLogout = () => {
-    alert("Logging out...");
-    navigate("/");
-    onClose(); // Close the panel after logout
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      console.log("User signed out successfully.");
+      navigate("/");
+      onClose(); // Close the panel after logout
+      // Optionally, you might want to show a success message using toast here
+    } catch (error) {
+      console.error("Error signing out:", error);
+      alert("Failed to logout. Please try again."); // Or use a toast for error
+    }
   };
+
   
   // Flashcard navigation functions
   const goToNextCard = () => {

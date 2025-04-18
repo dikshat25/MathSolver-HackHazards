@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { collection, addDoc, Timestamp } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth, db } from "../../firebase";
 import { Line } from "react-chartjs-2";
 import { 
   Chart as ChartJS, 
@@ -26,7 +29,17 @@ ChartJS.register(
 );
 
 const GraphGuessingGame = () => {
+const [user, setUser] = useState(null); // ✅ GOOD
+  
   // More comprehensive set of functions organized by difficulty level
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+  
+    return () => unsubscribe();
+  }, []);
+  
   const levelFunctions = [
     // Level 1 - Easy linear and simple functions
     [
@@ -288,21 +301,42 @@ const GraphGuessingGame = () => {
     setIsTimerRunning(true);
   };
 
+  const saveGameData = async () => {
+    if (!user) return;
+  
+    try {
+      await addDoc(collection(db, "userScores"), {
+        uid: user.uid,
+        email: user.email,
+        score,
+        level: currentLevel,
+        totalTime: statistics.totalTime,
+        correct: statistics.correct,
+        incorrect: statistics.incorrect,
+        createdAt: Timestamp.now(),
+      });
+      console.log("Progress saved for level", currentLevel);
+    } catch (error) {
+      console.error("Error saving game data:", error);
+    }
+  };
+  
   // Handle next question button click
   const handleNextQuestion = () => {
     if (questionIndex < 9) {
       setQuestionIndex(questionIndex + 1);
       getNextQuestion();
     } else {
-      // Level complete
+      // ✅ Save progress after each level
+      saveGameData();
+  
       if (currentLevel < 10) {
         setShowLevelComplete(true);
       } else {
-        // Game complete
         setGameComplete(true);
       }
     }
-  };
+  };  
 
   // Start next level
   const startNextLevel = () => {
@@ -334,7 +368,7 @@ const GraphGuessingGame = () => {
     setShowLevelComplete(false);
     getNextQuestion();
   };
-
+  
   // Timer effect
   useEffect(() => {
     let timer;

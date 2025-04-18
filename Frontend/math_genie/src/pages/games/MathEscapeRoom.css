@@ -3,10 +3,11 @@
 .escape-room-container {
   font-family: 'Roboto', sans-serif;
   min-height: 100vh;
+  width: 100%;
   position: relative;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start; 
   padding: 1rem;
   transition: all 0.5s ease;
 }
@@ -46,9 +47,9 @@
 }
 
 /* Start screen styling */
+/* Start screen styling */
 .start-screen {
   width: 100%;
-  max-width: 800px;
   background-color: rgba(0, 0, 0, 0.7);
   border-radius: 16px;
   padding: 2rem;
@@ -136,10 +137,10 @@
 /* Game screen layout */
 .game-screen {
   width: 100%;
-  max-width: 1200px;
   position: relative;
   z-index: 2;
 }
+
 
 .theme-name {
   text-align: center;
@@ -524,7 +525,6 @@
 /* End screen styling */
 .end-screen, .game-over-screen {
   width: 100%;
-  max-width: 800px;
   background-color: rgba(0, 0, 0, 0.7);
   border-radius: 16px;
   padding: 2rem;

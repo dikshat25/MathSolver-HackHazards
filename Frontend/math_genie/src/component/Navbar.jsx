@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
-import { Menu, X, MessageSquare, Settings } from "lucide-react";
+import { Menu, X, MessageSquare, Settings, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { auth } from '../firebase';
+import { signOut } from 'firebase/auth';
 
-export default function Navbar({ isDarkMode, setShowLoginForm, toggleSettings }) {
+export default function Navbar({ isDarkMode, setShowLoginForm, toggleSettings, user }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
@@ -11,7 +13,7 @@ export default function Navbar({ isDarkMode, setShowLoginForm, toggleSettings })
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
-    
+
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -24,13 +26,24 @@ export default function Navbar({ isDarkMode, setShowLoginForm, toggleSettings })
     navigate('/math-input');
   };
 
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      // Optionally, redirect the user after signing out
+      navigate('/');
+    } catch (error) {
+      console.error("Error signing out:", error);
+      // Handle sign-out error (e.g., display a message)
+    }
+  };
+
   return (
     <>
       <nav className={`fixed top-0 left-0 right-0 z-30 transition-all duration-300 ${
-        isScrolled 
-          ? isDarkMode 
-            ? 'bg-gray-900 shadow-lg' 
-            : 'bg-white shadow-lg' 
+        isScrolled
+          ? isDarkMode
+            ? 'bg-gray-900 shadow-lg'
+            : 'bg-white shadow-lg'
           : 'bg-transparent'
       }`}>
         <div className="container mx-auto px-4 py-3 md:px-6 md:py-4">
@@ -42,17 +55,17 @@ export default function Navbar({ isDarkMode, setShowLoginForm, toggleSettings })
               </div>
               <h1 className={`ml-2 text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>MathGenie</h1>
             </div>
-            
+
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-6">
               <NavLinks isDarkMode={isDarkMode} />
-              
+
               {/* Chat Button */}
-              <button 
+              <button
                 onClick={navigateToMathInput}
                 className={`flex items-center gap-1 p-2 rounded-lg ${
-                  isDarkMode 
-                    ? 'bg-purple-700 hover:bg-purple-600 text-white' 
+                  isDarkMode
+                    ? 'bg-purple-700 hover:bg-purple-600 text-white'
                     : 'bg-purple-100 hover:bg-purple-200 text-purple-700'
                 } transition-colors`}
                 aria-label="Math Chat"
@@ -60,67 +73,81 @@ export default function Navbar({ isDarkMode, setShowLoginForm, toggleSettings })
                 <MessageSquare size={20} />
                 <span className="text-sm font-medium">Chat</span>
               </button>
-              
+
               {/* Settings Button */}
-              <button 
+              <button
                 onClick={toggleSettings}
                 className={`p-2 rounded-lg ${
-                  isDarkMode 
-                    ? 'bg-gray-700 hover:bg-gray-600 text-white' 
+                  isDarkMode
+                    ? 'bg-gray-700 hover:bg-gray-600 text-white'
                     : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
                 } transition-colors`}
                 aria-label="Settings"
               >
                 <Settings size={20} />
               </button>
-              
-              {/* Sign In Button */}
-              <button 
-                onClick={() => setShowLoginForm(true)}
-                className={`${
-                  isDarkMode 
-                    ? 'bg-purple-600 hover:bg-purple-700' 
-                    : 'bg-purple-600 hover:bg-purple-700'
-                } text-white px-4 py-2 rounded-lg transition-all duration-300 font-medium`}
-              >
-                Sign In
-              </button>
+
+              {/* Sign In/User Account Button */}
+              {user ? (
+                <button
+                  onClick={() => navigate('/settings')} // Or a dedicated user profile page
+                  className={`flex items-center gap-2 ${
+                    isDarkMode
+                      ? 'bg-green-600 hover:bg-green-700 text-white'
+                      : 'bg-green-500 hover:bg-green-600 text-white'
+                  } px-4 py-2 rounded-lg transition-all duration-300 font-medium`}
+                >
+                  <User size={20} />
+                  <span>Your Account</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => setShowLoginForm(true)}
+                  className={`${
+                    isDarkMode
+                      ? 'bg-purple-600 hover:bg-purple-700'
+                      : 'bg-purple-600 hover:bg-purple-700'
+                  } text-white px-4 py-2 rounded-lg transition-all duration-300 font-medium`}
+                >
+                  Sign In
+                </button>
+              )}
             </div>
-            
+
             {/* Mobile Menu Button */}
             <div className="flex items-center gap-3 md:hidden">
               {/* Chat Button (Mobile) */}
-              <button 
+              <button
                 onClick={navigateToMathInput}
                 className={`p-2 rounded-lg ${
-                  isDarkMode 
-                    ? 'bg-purple-700 text-white' 
+                  isDarkMode
+                    ? 'bg-purple-700 text-white'
                     : 'bg-purple-100 text-purple-700'
                 }`}
                 aria-label="Math Chat"
               >
                 <MessageSquare size={20} />
               </button>
-              
+
               {/* Settings Button (Mobile) */}
-              <button 
+              <button
                 onClick={toggleSettings}
                 className={`p-2 rounded-lg ${
-                  isDarkMode 
-                    ? 'bg-gray-700 text-white' 
+                  isDarkMode
+                    ? 'bg-gray-700 text-white'
                     : 'bg-gray-200 text-gray-700'
                 }`}
                 aria-label="Settings"
               >
                 <Settings size={20} />
               </button>
-              
+
               {/* Mobile Menu Toggle */}
-              <button 
-                onClick={toggleMenu} 
+              <button
+                onClick={toggleMenu}
                 className={`p-2 rounded-lg ${
-                  isDarkMode 
-                    ? 'text-gray-300 hover:text-white' 
+                  isDarkMode
+                    ? 'text-gray-300 hover:text-white'
                     : 'text-gray-700 hover:text-purple-700'
                 }`}
                 aria-label="Toggle menu"
@@ -130,30 +157,47 @@ export default function Navbar({ isDarkMode, setShowLoginForm, toggleSettings })
             </div>
           </div>
         </div>
-        
+
         {/* Mobile Menu */}
         {isMenuOpen && (
           <div className={`md:hidden ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg`}>
             <div className="container mx-auto px-4 py-3">
               <div className="flex flex-col gap-4">
-                <NavLinks 
-                  isDarkMode={isDarkMode} 
-                  isMobile={true} 
-                  closeMenu={() => setIsMenuOpen(false)} 
+                <NavLinks
+                  isDarkMode={isDarkMode}
+                  isMobile={true}
+                  closeMenu={() => setIsMenuOpen(false)}
                 />
-                <button 
-                  onClick={() => {
-                    setShowLoginForm(true);
-                    setIsMenuOpen(false);
-                  }}
-                  className={`${
-                    isDarkMode 
-                      ? 'bg-purple-600 hover:bg-purple-700' 
-                      : 'bg-purple-600 hover:bg-purple-700'
-                  } text-white px-4 py-2 rounded-lg transition-all duration-300 font-medium`}
-                >
-                  Sign In
-                </button>
+                {user ? (
+                  <button
+                    onClick={() => {
+                      navigate('/settings');
+                      setIsMenuOpen(false);
+                    }}
+                    className={`flex items-center gap-2 ${
+                      isDarkMode
+                        ? 'bg-green-600 hover:bg-green-700 text-white'
+                        : 'bg-green-500 hover:bg-green-600 text-white'
+                    } px-4 py-2 rounded-lg transition-all duration-300 font-medium`}
+                  >
+                    <User size={20} />
+                    <span>Your Account</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setShowLoginForm(true);
+                      setIsMenuOpen(false);
+                    }}
+                    className={`${
+                      isDarkMode
+                        ? 'bg-purple-600 hover:bg-purple-700'
+                        : 'bg-purple-600 hover:bg-purple-700'
+                    } text-white px-4 py-2 rounded-lg transition-all duration-300 font-medium`}
+                  >
+                    Sign In
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -168,21 +212,21 @@ export default function Navbar({ isDarkMode, setShowLoginForm, toggleSettings })
 function NavLinks({ isDarkMode, isMobile = false, closeMenu }) {
   const navItems = [
     { label: "Home", href: "/" },
-    { label: "Dashboard", href: "/math-input" },
+    { label: "Dashboard", href: "/dashboard" },
     { label: "Brain Zone", href: "/brain-zone" },
     { label: "Mistake Tracker", href: "/mistakes" },
   ];
-  
+
   return (
     <>
       {navItems.map((item, index) => (
-        <a 
+        <a
           key={index}
           href={item.href}
           onClick={isMobile ? closeMenu : undefined}
           className={`block ${
-            isDarkMode 
-              ? 'text-gray-300 hover:text-white' 
+            isDarkMode
+              ? 'text-gray-300 hover:text-white'
               : 'text-gray-700 hover:text-purple-700'
           } transition-colors ${isMobile ? 'py-2 text-lg' : 'text-base'}`}
         >

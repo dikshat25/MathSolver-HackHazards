@@ -4,7 +4,7 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'fire
 import { doc, setDoc } from "firebase/firestore";
 import { db } from "../firebase"; // Adjust path if needed
 
-export default function LoginSignupModal({ isDarkMode, showLoginForm, setShowLoginForm }) {
+export default function LoginSignupModal({ isDarkMode, showLoginForm, setShowLoginForm, onAuthChange }) {
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [signupForm, setSignupForm] = useState({ name: '', email: '', password: '' });
@@ -22,11 +22,13 @@ export default function LoginSignupModal({ isDarkMode, showLoginForm, setShowLog
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      let userCredential;
       if (isLoginMode) {
-        const userCredential = await signInWithEmailAndPassword(auth, loginForm.email, loginForm.password);
+        userCredential = await signInWithEmailAndPassword(auth, loginForm.email, loginForm.password);
         console.log("Logged in:", userCredential.user);
+        onAuthChange(true, null);
       } else {
-        const userCredential = await createUserWithEmailAndPassword(auth, signupForm.email, signupForm.password);
+        userCredential = await createUserWithEmailAndPassword(auth, signupForm.email, signupForm.password);
         const user = userCredential.user;
 
         // Save name & email to Firestore
@@ -36,12 +38,13 @@ export default function LoginSignupModal({ isDarkMode, showLoginForm, setShowLog
         });
 
         console.log("Signed up and user info saved");
+        onAuthChange(true, null);
       }
 
       setShowLoginForm(false);
     } catch (error) {
       console.error("Auth error:", error.message);
-      alert(error.message);
+      onAuthChange(false, error.message);
     }
   };
 
@@ -52,20 +55,20 @@ export default function LoginSignupModal({ isDarkMode, showLoginForm, setShowLog
           <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-purple-900'}`}>
             {isLoginMode ? "Sign In" : "Create Account"}
           </h3>
-          <button 
+          <button
             onClick={() => setShowLoginForm(false)}
             className={`${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`}
           >
             ✕
           </button>
         </div>
-        
+
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
             {!isLoginMode && (
               <div>
                 <label className={`block ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Full Name</label>
-                <input 
+                <input
                   type="text"
                   name="name"
                   value={signupForm.name}
@@ -76,10 +79,10 @@ export default function LoginSignupModal({ isDarkMode, showLoginForm, setShowLog
                 />
               </div>
             )}
-            
+
             <div>
               <label className={`block ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Email</label>
-              <input 
+              <input
                 type="email"
                 name="email"
                 value={isLoginMode ? loginForm.email : signupForm.email}
@@ -89,10 +92,10 @@ export default function LoginSignupModal({ isDarkMode, showLoginForm, setShowLog
                 required
               />
             </div>
-            
+
             <div>
               <label className={`block ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Password</label>
-              <input 
+              <input
                 type="password"
                 name="password"
                 value={isLoginMode ? loginForm.password : signupForm.password}
@@ -103,16 +106,16 @@ export default function LoginSignupModal({ isDarkMode, showLoginForm, setShowLog
                 minLength={6}
               />
             </div>
-            
-            <button 
+
+            <button
               type="submit"
               className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg"
             >
               {isLoginMode ? "Sign In" : "Sign Up"}
             </button>
-            
+
             <div className="text-center">
-              <button 
+              <button
                 type="button"
                 onClick={() => {
                   setIsLoginMode(!isLoginMode);
