@@ -5,8 +5,8 @@ import { getDoc, getDocs, doc, collection, deleteDoc, query, where } from "fireb
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "../firebase";
 
-
 export default function SettingsPanel({ isDarkMode, toggleTheme, isOpen, onClose }) {
+  const [summarizedCards, setSummarizedCards] = useState([]);
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("profile");
 
@@ -18,19 +18,23 @@ export default function SettingsPanel({ isDarkMode, toggleTheme, isOpen, onClose
   });
 
   const [historyItems, setHistoryItems] = useState([]);
+
   const [viewMode, setViewMode] = useState("list");
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [currentSummary, setCurrentSummary] = useState("Tap 'Summarize' to view a flashcard summary");
+  const [isLoadingSummary, setIsLoadingSummary] = useState(false);
   const [userId, setUserId] = useState(null);
 
   // Fetch user data and history on auth change
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setUserId(user.uid);
-  
+
         try {
-          
+
           const displayNameFromEmail = (email) => {
             if (!email) return "Unnamed";
             const [namePart] = email.split("@");
@@ -40,33 +44,33 @@ export default function SettingsPanel({ isDarkMode, toggleTheme, isOpen, onClose
               .map(word => word.charAt(0).toUpperCase() + word.slice(1))
               .join(" ");
           };
-  
-          
+
+
           const userRef = doc(db, "users", user.uid);
           const userSnap = await getDoc(userRef);
-  
+
           let fullName = displayNameFromEmail(user.email);
-  
+
           if (userSnap.exists()) {
             const userData = userSnap.data();
             if (userData.fullName) {
               fullName = userData.fullName;
             }
           }
-  
+
           setProfileForm((prev) => ({
             ...prev,
             name: fullName,
             email: user.email || "No email"
           }));
-  
-          
+
+
           const historyRef = query(
             collection(db, "mathHistory"),
             where("uid", "==", user.uid)
           ); //  corrected path
           const historySnap = await getDocs(historyRef);
-          
+
           const items = historySnap.docs.map(doc => {
             const data = doc.data();
             return {
@@ -77,20 +81,78 @@ export default function SettingsPanel({ isDarkMode, toggleTheme, isOpen, onClose
               thumbnail: data.thumbnail || "/api/placeholder/60/60"
             };
           });
-          
+
           console.log("Fetched history items:", items); // Optional debug log
           setHistoryItems(items);
-          
+          const summarizeAll = async () => {
+            const summaries = await Promise.all(
+              items.map(async (item) => {
+                try {
+                  const response = await fetch("http://localhost:5000/summarize", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ text: item.solution }),
+                  });
+                  const data = await response.json();
+                  return data.summary || "No summary available.";
+                } catch (error) {
+                  console.error("Error summarizing:", error);
+                  return "Summary failed.";
+                }
+              })
+            );
+            setSummarizedCards(summaries);
+          };
+
         } catch (err) {
           console.error("Failed to fetch user or history:", err);
         }
       }
     });
-  
+
+
     return () => unsubscribe();
   }, []);
+
+  const summarizeCurrentCard = async () => {
+    const item = historyItems[currentCardIndex];
+    if (!item || !item.solution) return;
   
+    // Don’t refetch if already summarized
+    if (summarizedCards[currentCardIndex]) {
+      setCurrentSummary(summarizedCards[currentCardIndex]);
+      return;
+    }
   
+    setIsLoadingSummary(true);
+    try {
+      const response = await fetch("http://localhost:5000/summarize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: item.solution }),
+      });
+  
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      const summary = data.summary || "No summary available.";
+  
+      setSummarizedCards((prev) => ({
+        ...prev,
+        [currentCardIndex]: summary,
+      }));
+      setCurrentSummary(summary);
+    } catch (error) {
+      console.error("Summary failed:", error);
+      setCurrentSummary("Summary failed.");
+    } finally {
+      setIsLoadingSummary(false);
+    }
+  };  
+
+  const currentCardSummary = summarizedCards[currentCardIndex] || "No summary available";
+
   const handleProfileChange = (e) => {
     setProfileForm({
       ...profileForm,
@@ -105,7 +167,7 @@ export default function SettingsPanel({ isDarkMode, toggleTheme, isOpen, onClose
 
   const handleDeleteHistoryItem = async (id) => {
     setHistoryItems(historyItems.filter(item => item.id !== id));
-  
+
     if (userId) {
       try {
         const ref = doc(db, "mathHistory", userId, id); // assuming nested structure
@@ -135,36 +197,76 @@ export default function SettingsPanel({ isDarkMode, toggleTheme, isOpen, onClose
     }
   };
 
-  
+
   // Flashcard navigation functions
   const goToNextCard = () => {
     if (currentCardIndex < historyItems.length - 1) {
       setCurrentCardIndex(currentCardIndex + 1);
       setIsFlipped(false);
+      setCurrentSummary("Tap 'Summarize' to view a flashcard summary");
     }
   };
-  
+
   const goToPrevCard = () => {
     if (currentCardIndex > 0) {
       setCurrentCardIndex(currentCardIndex - 1);
       setIsFlipped(false);
+      setCurrentSummary("Tap 'Summarize' to view a flashcard summary");
+    }
+  };
+
+  const toggleCardFlip = async () => {
+    const nextFlip = !isFlipped;
+    console.log("Flipping card. Current index:", currentCardIndex);
+    console.log("Flipping to back side?", nextFlip);
+    setIsFlipped(nextFlip);
+  
+    if (nextFlip && historyItems[currentCardIndex]) {
+      console.log("Fetching summary for:", historyItems[currentCardIndex].problem);
+  
+      setCurrentSummary("Loading...");
+      setIsLoadingSummary(true);
+  
+      try {
+        const response = await fetch("http://localhost:5000/summarize", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: historyItems[currentCardIndex].solution }),
+        });
+  
+        console.log("API request sent. Waiting for response...");
+  
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  
+        const data = await response.json();
+        console.log("Received API response:", data);
+  
+        const summary = data.summary || "No summary available.";
+        setCurrentSummary(summary);
+        console.log("Set summary state to:", summary);
+      } catch (error) {
+        console.error("Failed to summarize:", error);
+        setCurrentSummary("Summary failed.");
+      } finally {
+        setIsLoadingSummary(false);
+        console.log("Finished summary fetch. isLoadingSummary:", false);
+      }
+    } else {
+      console.log("Not flipping to back or no history item found.");
     }
   };
   
-  const toggleCardFlip = () => {
-    setIsFlipped(!isFlipped);
-  };
 
   // If the panel is not open, don't render anything
   if (!isOpen) return null;
 
   return (
+
     <div className="fixed inset-0 z-50 overflow-hidden pointer-events-none">
       {/* Settings Panel */}
-      <div 
-        className={`fixed top-0 right-0 h-full w-full max-w-md transform transition-transform duration-300 ease-in-out z-50 pointer-events-auto ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        } ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} shadow-xl overflow-hidden`}
+      <div
+        className={`fixed top-0 right-0 h-full w-full max-w-md transform transition-transform duration-300 ease-in-out z-50 pointer-events-auto ${isOpen ? 'translate-x-0' : 'translate-x-full'
+          } ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} shadow-xl overflow-hidden`}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
@@ -176,13 +278,13 @@ export default function SettingsPanel({ isDarkMode, toggleTheme, isOpen, onClose
               </h2>
             </div>
             <div className="flex items-center">
-              <button 
+              <button
                 onClick={toggleTheme}
                 className={`p-2 rounded-full mr-2 ${isDarkMode ? 'bg-gray-600 text-yellow-300 hover:bg-gray-500' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
               >
                 {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
               </button>
-              <button 
+              <button
                 onClick={onClose}
                 className={`p-2 rounded-full ${isDarkMode ? 'hover:bg-gray-600 text-gray-300' : 'hover:bg-gray-200 text-gray-500'}`}
               >
@@ -190,34 +292,32 @@ export default function SettingsPanel({ isDarkMode, toggleTheme, isOpen, onClose
               </button>
             </div>
           </div>
-          
+
           {/* Tabs */}
           <div className={`flex border-b px-4 ${isDarkMode ? 'border-gray-700 bg-gray-750' : 'border-gray-200 bg-gray-50'}`}>
-            <button 
-              className={`py-4 px-6 font-medium flex items-center justify-center rounded-t-lg transition-colors ${
-                activeTab === 'profile' 
-                  ? (isDarkMode ? 'text-purple-400 border-b-2 border-purple-400 bg-gray-700' : 'text-purple-700 border-b-2 border-purple-700 bg-white') 
+            <button
+              className={`py-4 px-6 font-medium flex items-center justify-center rounded-t-lg transition-colors ${activeTab === 'profile'
+                  ? (isDarkMode ? 'text-purple-400 border-b-2 border-purple-400 bg-gray-700' : 'text-purple-700 border-b-2 border-purple-700 bg-white')
                   : (isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-600 hover:text-gray-900')
-              }`}
+                }`}
               onClick={() => setActiveTab('profile')}
             >
               <User size={18} className="mr-2" />
               Profile
             </button>
             <div className="w-4"></div> {/* Spacer between tabs */}
-            <button 
-              className={`py-4 px-6 font-medium flex items-center justify-center rounded-t-lg transition-colors ${
-                activeTab === 'history' 
-                  ? (isDarkMode ? 'text-purple-400 border-b-2 border-purple-400 bg-gray-700' : 'text-purple-700 border-b-2 border-purple-700 bg-white') 
+            <button
+              className={`py-4 px-6 font-medium flex items-center justify-center rounded-t-lg transition-colors ${activeTab === 'history'
+                  ? (isDarkMode ? 'text-purple-400 border-b-2 border-purple-400 bg-gray-700' : 'text-purple-700 border-b-2 border-purple-700 bg-white')
                   : (isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-600 hover:text-gray-900')
-              }`}
+                }`}
               onClick={() => setActiveTab('history')}
             >
               <History size={18} className="mr-2" />
               History
             </button>
           </div>
-          
+
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-5">
             {/* Profile Tab */}
@@ -232,7 +332,7 @@ export default function SettingsPanel({ isDarkMode, toggleTheme, isOpen, onClose
                     <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Manage your account settings</p>
                   </div>
                 </div>
-                
+
                 <form onSubmit={handleProfileSubmit} className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-white border border-gray-200'} shadow-sm`}>
                   <div className="space-y-5">
                     <div>
@@ -246,15 +346,14 @@ export default function SettingsPanel({ isDarkMode, toggleTheme, isOpen, onClose
                           name="name"
                           value={profileForm.name}
                           onChange={handleProfileChange}
-                          className={`w-full pl-10 pr-3 py-2 rounded-lg ${
-                            isDarkMode 
-                              ? 'bg-gray-600 border-gray-500 focus:border-purple-400 focus:ring-1 focus:ring-purple-400' 
+                          className={`w-full pl-10 pr-3 py-2 rounded-lg ${isDarkMode
+                              ? 'bg-gray-600 border-gray-500 focus:border-purple-400 focus:ring-1 focus:ring-purple-400'
                               : 'bg-gray-50 border border-gray-300 focus:border-purple-500 focus:ring-1 focus:ring-purple-500'
-                          } transition-colors`}
+                            } transition-colors`}
                         />
                       </div>
                     </div>
-                    
+
                     <div>
                       <label className={`block mb-2 font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Email Address</label>
                       <div className="relative">
@@ -266,15 +365,14 @@ export default function SettingsPanel({ isDarkMode, toggleTheme, isOpen, onClose
                           name="email"
                           value={profileForm.email}
                           onChange={handleProfileChange}
-                          className={`w-full pl-10 pr-3 py-2 rounded-lg ${
-                            isDarkMode 
-                              ? 'bg-gray-600 border-gray-500 focus:border-purple-400 focus:ring-1 focus:ring-purple-400' 
+                          className={`w-full pl-10 pr-3 py-2 rounded-lg ${isDarkMode
+                              ? 'bg-gray-600 border-gray-500 focus:border-purple-400 focus:ring-1 focus:ring-purple-400'
                               : 'bg-gray-50 border border-gray-300 focus:border-purple-500 focus:ring-1 focus:ring-purple-500'
-                          } transition-colors`}
+                            } transition-colors`}
                         />
                       </div>
                     </div>
-                    
+
                     <div>
                       <label className={`block mb-2 font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Education Level</label>
                       <div className="relative">
@@ -285,11 +383,10 @@ export default function SettingsPanel({ isDarkMode, toggleTheme, isOpen, onClose
                           name="grade"
                           value={profileForm.grade}
                           onChange={handleProfileChange}
-                          className={`w-full pl-10 pr-3 py-2 rounded-lg appearance-none ${
-                            isDarkMode 
-                              ? 'bg-gray-600 border-gray-500 focus:border-purple-400 focus:ring-1 focus:ring-purple-400' 
+                          className={`w-full pl-10 pr-3 py-2 rounded-lg appearance-none ${isDarkMode
+                              ? 'bg-gray-600 border-gray-500 focus:border-purple-400 focus:ring-1 focus:ring-purple-400'
                               : 'bg-gray-50 border border-gray-300 focus:border-purple-500 focus:ring-1 focus:ring-purple-500'
-                          } transition-colors`}
+                            } transition-colors`}
                         >
                           <option value="Elementary">Elementary School</option>
                           <option value="Middle">Middle School</option>
@@ -304,7 +401,7 @@ export default function SettingsPanel({ isDarkMode, toggleTheme, isOpen, onClose
                         </div>
                       </div>
                     </div>
-                    
+
                     <div>
                       <label className={`block mb-2 font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Preferred Explanation Mode</label>
                       <div className="relative">
@@ -315,11 +412,10 @@ export default function SettingsPanel({ isDarkMode, toggleTheme, isOpen, onClose
                           name="preferredMode"
                           value={profileForm.preferredMode}
                           onChange={handleProfileChange}
-                          className={`w-full pl-10 pr-3 py-2 rounded-lg appearance-none ${
-                            isDarkMode 
-                              ? 'bg-gray-600 border-gray-500 focus:border-purple-400 focus:ring-1 focus:ring-purple-400' 
+                          className={`w-full pl-10 pr-3 py-2 rounded-lg appearance-none ${isDarkMode
+                              ? 'bg-gray-600 border-gray-500 focus:border-purple-400 focus:ring-1 focus:ring-purple-400'
                               : 'bg-gray-50 border border-gray-300 focus:border-purple-500 focus:ring-1 focus:ring-purple-500'
-                          } transition-colors`}
+                            } transition-colors`}
                         >
                           <option value="eli5">ELI5 (Simplified)</option>
                           <option value="detailed">Detailed</option>
@@ -333,13 +429,13 @@ export default function SettingsPanel({ isDarkMode, toggleTheme, isOpen, onClose
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="mt-6">
-                    <button 
+                    <button
                       type="submit"
                       className={`w-full py-3 rounded-lg flex items-center justify-center gap-2 
-                        ${isDarkMode 
-                          ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+                        ${isDarkMode
+                          ? 'bg-purple-600 hover:bg-purple-700 text-white'
                           : 'bg-purple-600 hover:bg-purple-700 text-white'
                         } transition-colors shadow-sm font-medium`}
                     >
@@ -350,7 +446,7 @@ export default function SettingsPanel({ isDarkMode, toggleTheme, isOpen, onClose
                 </form>
               </div>
             )}
-            
+
             {/* History Tab */}
             {activeTab === 'history' && (
               <div>
@@ -364,39 +460,37 @@ export default function SettingsPanel({ isDarkMode, toggleTheme, isOpen, onClose
                       <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Review your past solutions</p>
                     </div>
                   </div>
-                  
+
                   {/* View mode toggle - Enhanced with better spacing and styling */}
                   {historyItems.length > 0 && (
                     <div className={`flex rounded-lg overflow-hidden ${isDarkMode ? 'bg-gray-600' : 'bg-gray-200'} p-1`}>
-                      <button 
+                      <button
                         onClick={() => setViewMode("list")}
-                        className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
-                          viewMode === "list" 
-                            ? (isDarkMode ? 'bg-purple-600 text-white shadow-sm' : 'bg-purple-600 text-white shadow-sm') 
+                        className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${viewMode === "list"
+                            ? (isDarkMode ? 'bg-purple-600 text-white shadow-sm' : 'bg-purple-600 text-white shadow-sm')
                             : (isDarkMode ? 'text-gray-300 hover:text-white hover:bg-gray-500' : 'text-gray-600 hover:text-gray-800 hover:bg-gray-300')
-                        }`}
+                          }`}
                       >
                         List
                       </button>
                       <div className="mx-0.5"></div> {/* Space between buttons */}
-                      <button 
+                      <button
                         onClick={() => {
                           setViewMode("flashcard");
                           setCurrentCardIndex(0);
                           setIsFlipped(false);
                         }}
-                        className={`px-4 py-2 text-sm font-small rounded-md transition-all duration-200 ${
-                          viewMode === "flashcard" 
-                            ? (isDarkMode ? 'bg-purple-600 text-white shadow-sm' : 'bg-purple-600 text-white shadow-sm') 
+                        className={`px-4 py-2 text-sm font-small rounded-md transition-all duration-200 ${viewMode === "flashcard"
+                            ? (isDarkMode ? 'bg-purple-600 text-white shadow-sm' : 'bg-purple-600 text-white shadow-sm')
                             : (isDarkMode ? 'text-gray-300 hover:text-white hover:bg-gray-500' : 'text-gray-600 hover:text-gray-800 hover:bg-gray-300')
-                        }`}
+                          }`}
                       >
                         Card
                       </button>
                     </div>
                   )}
                 </div>
-                
+
                 {historyItems.length === 0 ? (
                   <div className={`text-center py-12 ${isDarkMode ? 'bg-gray-700' : 'bg-white border border-gray-200'} rounded-lg shadow-sm`}>
                     <Award size={48} className={`mx-auto mb-4 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
@@ -407,7 +501,7 @@ export default function SettingsPanel({ isDarkMode, toggleTheme, isOpen, onClose
                   // List View
                   <div className="space-y-4">
                     {historyItems.map(item => (
-                      <div 
+                      <div
                         key={item.id}
                         className={`
                           ${isDarkMode ? 'bg-gray-700 hover:bg-gray-650' : 'bg-white hover:bg-gray-50 border border-gray-200'} 
@@ -424,22 +518,20 @@ export default function SettingsPanel({ isDarkMode, toggleTheme, isOpen, onClose
                         <div className="flex gap-2 ml-2 shrink-0">
                           <button
                             onClick={() => handleViewSolution(item.id)}
-                            className={`p-2 rounded-lg ${
-                              isDarkMode 
-                                ? 'bg-gray-600 hover:bg-purple-600 text-gray-300 hover:text-white' 
+                            className={`p-2 rounded-lg ${isDarkMode
+                                ? 'bg-gray-600 hover:bg-purple-600 text-gray-300 hover:text-white'
                                 : 'bg-purple-50 hover:bg-purple-100 text-purple-600'
-                            } transition-colors`}
+                              } transition-colors`}
                             title="View Solution"
                           >
                             <Eye size={16} />
                           </button>
                           <button
                             onClick={() => handleDeleteHistoryItem(item.id)}
-                            className={`p-2 rounded-lg ${
-                              isDarkMode 
-                                ? 'bg-gray-600 hover:bg-red-600 text-gray-300 hover:text-white' 
+                            className={`p-2 rounded-lg ${isDarkMode
+                                ? 'bg-gray-600 hover:bg-red-600 text-gray-300 hover:text-white'
                                 : 'bg-red-50 hover:bg-red-100 text-red-600'
-                            } transition-colors`}
+                              } transition-colors`}
                             title="Delete from History"
                           >
                             <Trash2 size={16} />
@@ -452,25 +544,24 @@ export default function SettingsPanel({ isDarkMode, toggleTheme, isOpen, onClose
                   // Flashcard View
                   <div className="flex flex-col items-center">
                     {/* Flashcard - Enhanced with better styling */}
-                    <div 
+                    <div
                       className={`w-full aspect-[4/3] perspective-1000 my-4 cursor-pointer`}
                       onClick={toggleCardFlip}
+                  
                     >
                       <div className={`relative w-full h-full transition-transform duration-500 transform-style-preserve-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
                         {/* Front of card (Problem) */}
-                        <div 
-                          className={`absolute inset-0 rounded-xl p-6 flex flex-col justify-between backface-hidden ${
-                            isDarkMode 
-                              ? 'bg-gray-700 border border-gray-600' 
+                        <div
+                          className={`absolute inset-0 rounded-xl p-6 flex flex-col justify-between backface-hidden ${isDarkMode
+                              ? 'bg-gray-700 border border-gray-600'
                               : 'bg-white border-2 border-purple-100'
-                          } shadow-lg`}
+                            } shadow-lg`}
                         >
                           <div className="flex items-center justify-between mb-4">
-                            <span className={`text-sm font-medium px-3 py-1 rounded-full ${
-                              isDarkMode 
-                                ? 'bg-gray-600 text-gray-300' 
+                            <span className={`text-sm font-medium px-3 py-1 rounded-full ${isDarkMode
+                                ? 'bg-gray-600 text-gray-300'
                                 : 'bg-purple-50 text-purple-700'
-                            }`}>
+                              }`}>
                               <Clock size={14} className="inline mr-1" />
                               {historyItems[currentCardIndex].date}
                             </span>
@@ -478,37 +569,35 @@ export default function SettingsPanel({ isDarkMode, toggleTheme, isOpen, onClose
                               Card {currentCardIndex + 1} of {historyItems.length}
                             </span>
                           </div>
-                          
+
                           <div className="flex-1 flex flex-col items-center justify-center">
-                            <img 
-                              src={historyItems[currentCardIndex].thumbnail} 
-                              alt="Problem visual" 
+                            <img
+                              src={historyItems[currentCardIndex].thumbnail}
+                              alt="Problem visual"
                               className="w-20 h-20 rounded-lg mb-5 object-cover shadow-md"
                             />
                             <h3 className={`text-lg font-medium text-center ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                               {historyItems[currentCardIndex].problem}
                             </h3>
                           </div>
-                          
+
                           <p className={`text-center text-sm mt-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} animate-pulse`}>
                             Tap to see solution
                           </p>
                         </div>
-                        
+
                         {/* Back of card (Solution) */}
-                        <div 
-                          className={`absolute inset-0 rounded-xl p-6 flex flex-col justify-between backface-hidden rotate-y-180 ${
-                            isDarkMode 
-                              ? 'bg-gray-700 border border-gray-600' 
+                        <div
+                          className={`absolute inset-0 rounded-xl p-6 flex flex-col justify-between backface-hidden rotate-y-180 ${isDarkMode
+                              ? 'bg-gray-700 border border-gray-600'
                               : 'bg-white border-2 border-purple-100'
-                          } shadow-lg`}
+                            } shadow-lg`}
                         >
                           <div className="flex items-center justify-between mb-4">
-                            <span className={`text-sm font-medium px-3 py-1 rounded-full ${
-                              isDarkMode 
-                                ? 'bg-gray-600 text-gray-300' 
+                            <span className={`text-sm font-medium px-3 py-1 rounded-full ${isDarkMode
+                                ? 'bg-gray-600 text-gray-300'
                                 : 'bg-purple-50 text-purple-700'
-                            }`}>
+                              }`}>
                               <Bookmark size={14} className="inline mr-1" />
                               Solution
                             </span>
@@ -516,24 +605,24 @@ export default function SettingsPanel({ isDarkMode, toggleTheme, isOpen, onClose
                               Card {currentCardIndex + 1} of {historyItems.length}
                             </span>
                           </div>
-                          
-                          <div className="flex-1 flex flex-col items-center justify-center">
+
+                          <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
                             <pre className={`text-lg font-mono whitespace-pre-wrap text-center ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                              {historyItems[currentCardIndex].solution}
+                              {isLoadingSummary ? "Loading..." : currentSummary}
                             </pre>
+
                           </div>
-                          
+
                           <div className="flex justify-end">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleViewSolution(historyItems[currentCardIndex].id);
                               }}
-                              className={`text-sm px-4 py-2 rounded-lg ${
-                                isDarkMode 
-                                  ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+                              className={`text-sm px-4 py-2 rounded-lg ${isDarkMode
+                                  ? 'bg-purple-600 hover:bg-purple-700 text-white'
                                   : 'bg-purple-600 hover:bg-purple-700 text-white'
-                              } transition-colors shadow-sm`}
+                                } transition-colors shadow-sm`}
                             >
                               <Eye size={14} className="inline mr-1" />
                               View Full Solution
@@ -542,40 +631,37 @@ export default function SettingsPanel({ isDarkMode, toggleTheme, isOpen, onClose
                         </div>
                       </div>
                     </div>
-                    
+
                     {/* Navigation controls - Enhanced styling */}
                     <div className="flex items-center justify-between w-full mt-6">
                       <button
                         onClick={goToPrevCard}
                         disabled={currentCardIndex === 0}
-                        className={`p-3 rounded-full transition-all duration-200 ${
-                          currentCardIndex === 0
+                        className={`p-3 rounded-full transition-all duration-200 ${currentCardIndex === 0
                             ? (isDarkMode ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-gray-100 text-gray-400 cursor-not-allowed')
                             : (isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white' : 'bg-purple-50 hover:bg-purple-100 text-purple-600')
-                        }`}
+                          }`}
                       >
                         <ChevronLeft size={24} />
                       </button>
-                      
+
                       <button
                         onClick={toggleCardFlip}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                          isDarkMode
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isDarkMode
                             ? 'bg-gray-600 hover:bg-gray-500 text-white'
                             : 'bg-purple-100 hover:bg-purple-200 text-purple-700'
-                        }`}
+                          }`}
                       >
                         {isFlipped ? 'Show Problem' : 'Show Solution'}
                       </button>
-                      
+
                       <button
                         onClick={goToNextCard}
                         disabled={currentCardIndex === historyItems.length - 1}
-                        className={`p-3 rounded-full transition-all duration-200 ${
-                          currentCardIndex === historyItems.length - 1
+                        className={`p-3 rounded-full transition-all duration-200 ${currentCardIndex === historyItems.length - 1
                             ? (isDarkMode ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-gray-100 text-gray-400 cursor-not-allowed')
                             : (isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white' : 'bg-purple-50 hover:bg-purple-100 text-purple-600')
-                        }`}
+                          }`}
                       >
                         <ChevronRight size={24} />
                       </button>
@@ -584,22 +670,23 @@ export default function SettingsPanel({ isDarkMode, toggleTheme, isOpen, onClose
                     {/* Progress indicator */}
                     <div className="w-full mt-4 mb-2">
                       <div className={`h-1.5 rounded-full overflow-hidden ${isDarkMode ? 'bg-gray-600' : 'bg-gray-200'}`}>
-                        <div 
-                          className="h-full bg-purple-600 transition-all duration-300" 
+                        <div
+                          className="h-full bg-purple-600 transition-all duration-300"
                           style={{ width: `${((currentCardIndex + 1) / historyItems.length) * 100}%` }}
                         ></div>
                       </div>
                     </div>
 
+
+
                     {/* Delete button */}
                     <div className="w-full mt-4">
                       <button
                         onClick={() => handleDeleteHistoryItem(historyItems[currentCardIndex].id)}
-                        className={`w-full py-2 rounded-lg flex items-center justify-center gap-2 transition-colors ${
-                          isDarkMode
+                        className={`w-full py-2 rounded-lg flex items-center justify-center gap-2 transition-colors ${isDarkMode
                             ? 'bg-gray-700 hover:bg-red-600 text-gray-300 hover:text-white border border-gray-600'
                             : 'bg-red-50 hover:bg-red-100 text-red-600 border border-red-100'
-                        }`}
+                          }`}
                       >
                         <Trash2 size={16} />
                         Delete This Card
@@ -610,10 +697,10 @@ export default function SettingsPanel({ isDarkMode, toggleTheme, isOpen, onClose
               </div>
             )}
           </div>
-          
+
           {/* Footer */}
           <div className={`p-4 ${isDarkMode ? 'border-t border-gray-700 bg-gray-750' : 'border-t border-gray-200 bg-gray-50'}`}>
-            <button 
+            <button
               onClick={handleLogout}
               className="w-full py-3 rounded-lg flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white transition-colors shadow-sm font-medium"
             >

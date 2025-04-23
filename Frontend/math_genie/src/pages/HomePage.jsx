@@ -181,11 +181,6 @@ export default function HomePage() {
               <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Displays step-by-step solutions with a toggle for ELI5 (Explain Like I'm 5) mode.</p>
             </div>
 
-            <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-purple-50'} p-6 rounded-xl shadow-md`}>
-              <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-purple-900'} mb-2`}>Mistake Tracker</h3>
-              <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Shows user's weak topics & past performance to focus on improvement areas.</p>
-            </div>
-
             <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-purple-50'} p-6 rounded-xl shadow-md md:col-span-2 lg:col-span-1`}>
               <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-purple-900'} mb-2`}>Settings/Profile</h3>
               <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>User preferences, modes (basic/advanced), and theme switcher customization.</p>
@@ -207,14 +202,14 @@ export default function HomePage() {
               isDarkMode={isDarkMode}
             />
             <FeatureCard
-              title="ELI5 Mode"
-              description="Toggle between beginner and expert explanations based on your understanding level."
+              title="Gamified Learning"
+              description="Make Maths Learning Fun."
               icon={<div className="text-3xl">🔄</div>}
               isDarkMode={isDarkMode}
             />
             <FeatureCard
-              title="Mistake Tracker"
-              description="Identify your weak areas and track your progress over time."
+              title="Flashcards Maker"
+              description="Will make Summarized Flashcards for you."
               icon={<div className="text-3xl">📈</div>}
               isDarkMode={isDarkMode}
             />
