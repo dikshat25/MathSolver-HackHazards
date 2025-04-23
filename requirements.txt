@@ -6,3 +6,6 @@ werkzeug
 openai-whisper
 torch
 ffmpeg-python
+sympy
+numpy
+matplotlib
